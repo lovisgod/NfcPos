@@ -67,5 +67,43 @@ class Conversions {
             }
             return String(hexChars)
         }
+
+        fun parseBERTLV(data: ByteArray): BerTlvs? {
+            return BerTlvParser().parse(data)
+        }
+
+        fun findTLVTAG(tlvs: BerTlvs, tag: String): BerTlv? {
+            return tlvs.find(BerTag(tag))
+        }
+
+
+
+        fun hexToBin(s: String): String? {
+            val digiMap: MutableMap<String, String> = HashMap()
+
+            digiMap["0"] = "0000"
+            digiMap["1"] = "0001"
+            digiMap["2"] = "0010"
+            digiMap["3"] = "0011"
+            digiMap["4"] = "0100"
+            digiMap["5"] = "0101"
+            digiMap["6"] = "0110"
+            digiMap["7"] = "0111"
+            digiMap["8"] = "1000"
+            digiMap["9"] = "1001"
+            digiMap["A"] = "1010"
+            digiMap["B"] = "1011"
+            digiMap["C"] = "1100"
+            digiMap["D"] = "1101"
+            digiMap["E"] = "1110"
+            digiMap["F"] = "1111"
+            val hex = s.toCharArray()
+            var binaryString = ""
+            for (h in hex) {
+                binaryString = binaryString + digiMap[h.toString()]
+            }
+            return binaryString
+        }
     }
+
 }
