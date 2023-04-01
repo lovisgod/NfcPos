@@ -1,5 +1,11 @@
 package com.lovisgod.nfcpos.utils;
 
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
+
+import java.nio.charset.StandardCharsets;
+
 public class HexUtil {
 
     private static final char[] CHARS_TABLES = "0123456789ABCDEF".toCharArray();
@@ -93,5 +99,11 @@ public class HexUtil {
             sbuf = null;
             return returnString;
         }
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
+    public static String convertStringToHex(String str) {
+        String chars = toHexString(str.getBytes(StandardCharsets.UTF_8));
+        return chars;
     }
 }

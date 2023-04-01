@@ -6,9 +6,11 @@ import android.content.IntentFilter
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import com.lovisgod.nfcpos.utils.Conversions
 import com.lovisgod.nfcpos.utils.HexUtil
 import com.lovisgod.nfcpos.utils.console
@@ -73,7 +75,9 @@ class MainActivity : AppCompatActivity() {
         val tagFromIntent: Tag? = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG)
 
         if (tagFromIntent !=null) {
-            onTagDiscovered(tagFromIntent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                onTagDiscovered(tagFromIntent)
+            }
         } else {
             console.log("nfc tag", "Tag is empty")
         }
@@ -94,15 +98,6 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun getProcessingOptionApdu(data: String): ByteArray? {
-//        val commandApdu = ByteArray(6 + aid.size)
-//        commandApdu[0] = 0x80.toByte() // CLA
-//        commandApdu[1] = 0xA8.toByte() // INS
-//        commandApdu[2] = 0x00.toByte() // P1
-//        commandApdu[3] = 0x00.toByte() // P2
-//        commandApdu[4] = (aid.size and 0x0FF).toByte() // Lc
-//        System.arraycopy(aid, 0, commandApdu, 5, aid.size)
-//        commandApdu[commandApdu.size - 1] = 0x00.toByte() // Le
-//        return commandApdu
         return Conversions.HexStringToByteArray(data)
     }
 
@@ -110,12 +105,16 @@ class MainActivity : AppCompatActivity() {
         return Conversions.HexStringToByteArray(data)
     }
 
+     @RequiresApi(Build.VERSION_CODES.KITKAT)
      fun onTagDiscovered(tag: Tag) {
         val isoDep = IsoDep.get(tag);
         if (isoDep != null) {
             try {
                 isoDep.connect()
-                makeApplicationSelection(isoDep)
+                // select application 1
+                val selectPPSEData = SelectApplicationHandler.selectByname(isoDep)
+                println("AID ======= ${selectPPSEData.APPLICATION_IDENTIFIER}, ======API ==== ${selectPPSEData.APPLICATION_PRIORITY_INDICATOR}")
+//                makeApplicationSelection(isoDep)
                 // READ APPLICATION DATA
                 // EMV RISK MANAGEMENT [ OFFLINE DATA AUTH,
                          // PROCESSING RESTRICTIONS,
@@ -223,6 +222,35 @@ class MainActivity : AppCompatActivity() {
         console.log("tlvrrc", rrctlv)
 
     }
+
+
+    private fun decodeAip(aipBinary: String): AIPDECODED {
+      val splittedAip = aipBinary.split("")
+      val aipDecoded = AIPDECODED()
+      aipDecoded.apply {
+          SDA_SUPPORTED = splittedAip.get(2) == "1"
+          DDA_SUPPORTED = splittedAip.get(3) == "1"
+          CARD_HOLDER_VERIFICATION = splittedAip.get(4) == "1"
+          TERMINAL_RISK_TO_BE_PERFORMED = splittedAip.get(5) == "1"
+          ISSUER_AUTHENTICATION_TO_BE_PERFORMED = splittedAip.get(6) == "1"
+          CDA_SUPPORTED = splittedAip.get(8) == "1"
+      }
+      return  aipDecoded
+    }
+
+
+    enum class CVMUSE {
+        signature, onlinepin, offlinepin
+    }
+
+    data class AIPDECODED (
+        var SDA_SUPPORTED : Boolean = false,
+        var DDA_SUPPORTED: Boolean = false,
+        var CARD_HOLDER_VERIFICATION: Boolean = false,
+        var TERMINAL_RISK_TO_BE_PERFORMED: Boolean = false,
+        var ISSUER_AUTHENTICATION_TO_BE_PERFORMED: Boolean = false,
+        var CDA_SUPPORTED: Boolean = false
+     )
 
 // NOTE
 // CDOL1 is only used in contactless application
