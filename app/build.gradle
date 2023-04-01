@@ -50,4 +50,10 @@ dependencies {
     }
 
     api "com.fasterxml.jackson.module:jackson-module-kotlin:2.9.10"
+
+    api 'com.pixplicity.easyprefs:EasyPrefs:1.10.0'
+
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+
 }

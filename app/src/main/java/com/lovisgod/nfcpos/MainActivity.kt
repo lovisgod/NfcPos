@@ -11,9 +11,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import com.lovisgod.nfcpos.utils.Conversions
-import com.lovisgod.nfcpos.utils.HexUtil
-import com.lovisgod.nfcpos.utils.console
+import com.lovisgod.nfcpos.data.model.NFCPOSEXCEPTION
+import com.lovisgod.nfcpos.utils.*
 import java.nio.charset.Charset
 
 class MainActivity : AppCompatActivity() {
@@ -22,6 +21,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var intentFiltersArray: Array<IntentFilter>
     private lateinit var techListsArray: Array<Array<String>>
     private lateinit var pendingIntent: PendingIntent
+
+    val emvOptV2 = EmvOptV2()
 
     val AID = "A0000000041010"
     var FCI = ""
@@ -52,6 +53,10 @@ class MainActivity : AppCompatActivity() {
         if (!mNfcAdapter.isEnabled())
             Toast.makeText(this.getBaseContext(),
                 "NFC not enabled for this device", Toast.LENGTH_LONG).show()
+
+        AIDmapper().getAllAid(emvOptV2)
+        AIDmapper().getAllCapk(emvOptV2)
+
     }
 
 
@@ -112,8 +117,24 @@ class MainActivity : AppCompatActivity() {
             try {
                 isoDep.connect()
                 // select application 1
-                val selectPPSEData = SelectApplicationHandler.selectByname(isoDep)
-                println("AID ======= ${selectPPSEData.APPLICATION_IDENTIFIER}, ======API ==== ${selectPPSEData.APPLICATION_PRIORITY_INDICATOR}")
+               try {
+                   val selectPPSEData = SelectApplicationHandler.selectByname(isoDep)
+                   println("AID ======= ${selectPPSEData.APPLICATION_IDENTIFIER}, " +
+                           "======API ==== ${selectPPSEData.APPLICATION_PRIORITY_INDICATOR}")
+
+                   val mutuallySupportedAid = emvOptV2.checkAidAvailability(
+                       ByteUtil.hexStr2Bytes(selectPPSEData.APPLICATION_IDENTIFIER)
+                   )
+
+                   if (mutuallySupportedAid !== null) {
+                       val aidSelected = ByteUtil.bytes2HexStr(mutuallySupportedAid.aid)
+                       println("selected aid ::::: $aidSelected")
+                   } else {
+                       throw NFCPOSEXCEPTION("Aid not found")
+                   }
+               } catch (e: Exception) {
+                   println(e.message)
+               }
 //                makeApplicationSelection(isoDep)
                 // READ APPLICATION DATA
                 // EMV RISK MANAGEMENT [ OFFLINE DATA AUTH,
