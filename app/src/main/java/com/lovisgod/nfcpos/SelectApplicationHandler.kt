@@ -3,6 +3,7 @@ package com.lovisgod.nfcpos
 import android.nfc.tech.IsoDep
 import android.os.Build
 import androidx.annotation.RequiresApi
+import com.lovisgod.nfcpos.data.model.FinalSelectApplicationData
 import com.lovisgod.nfcpos.data.model.SelectPPSEData
 import com.lovisgod.nfcpos.utils.Conversions
 import com.lovisgod.nfcpos.utils.HexUtil
@@ -15,7 +16,9 @@ object SelectApplicationHandler {
         FILE_CONTROL_INFORMATION_TEMPLATE("6F", "FILE_CONTROL_INFORMATION_TEMPLATE"),
         DEDICATED_FILE_NAME("84", "DEDICATED_FILE_NAME"),
         APPLICATION_IDENTIFIER("4F", "APPLICATION_IDENTIFIER"),
-        APPLICATION_PRIORITY_INDICATOR("87", "APPLICATION_PRIORITY_INDICATOR")
+        APPLICATION_IDENTIFIER84("84", "APPLICATION_IDENTIFIER"),
+        APPLICATION_PRIORITY_INDICATOR("87", "APPLICATION_PRIORITY_INDICATOR"),
+        PROCESSING_OPTION_DATA_OBJECT_LIST("9FC8", "PDOL")
     }
 
     @RequiresApi(Build.VERSION_CODES.KITKAT)
@@ -39,6 +42,27 @@ object SelectApplicationHandler {
 
         return selectPPSEData
 
+    }
+
+
+    fun finalSelectApplication(isoDep: IsoDep, aid: String): FinalSelectApplicationData {
+        val command = "00A4040007${aid}00"
+        console.log("final select application", command)
+        val result = isoDep.transceive(Conversions.HexStringToByteArray(command))
+        console.log("final select application isoResult", HexUtil.toHexString(result))
+        var bertlvs = Conversions.parseBERTLV(result)
+        console.log("bertlv", bertlvs.toString())
+        val aidGotten =
+            TAGHelper.getTagFromTlv(bertlvs, SelectApplicationData.APPLICATION_IDENTIFIER84.tag)
+        val pdol = TAGHelper.getTagFromTlv(
+            bertlvs,
+            SelectApplicationData.PROCESSING_OPTION_DATA_OBJECT_LIST.tag
+        )
+
+        return FinalSelectApplicationData(
+            aid = aidGotten,
+            pdol = pdol
+        )
     }
 
 

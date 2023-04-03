@@ -15,7 +15,7 @@ import com.lovisgod.nfcpos.data.model.NFCPOSEXCEPTION
 import com.lovisgod.nfcpos.utils.*
 import java.nio.charset.Charset
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), EmvListener {
 
     private lateinit var mNfcAdapter: NfcAdapter
     private lateinit var intentFiltersArray: Array<IntentFilter>
@@ -23,11 +23,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var pendingIntent: PendingIntent
 
     val emvOptV2 = EmvOptV2()
+    lateinit var emvHandler: EmvHandler
 
     val AID = "A0000000041010"
     var FCI = ""
 
     var SelectAID = Conversions.HexStringToByteArray(AID)
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +58,11 @@ class MainActivity : AppCompatActivity() {
 
         AIDmapper().getAllAid(emvOptV2)
         AIDmapper().getAllCapk(emvOptV2)
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            emvHandler = EmvHandler(this)
+        }
 
     }
 
@@ -116,26 +123,9 @@ class MainActivity : AppCompatActivity() {
         if (isoDep != null) {
             try {
                 isoDep.connect()
+                emvHandler.start(isoDep)
                 // select application 1
-               try {
-                   val selectPPSEData = SelectApplicationHandler.selectByname(isoDep)
-                   println("AID ======= ${selectPPSEData.APPLICATION_IDENTIFIER}, " +
-                           "======API ==== ${selectPPSEData.APPLICATION_PRIORITY_INDICATOR}")
-
-                   val mutuallySupportedAid = emvOptV2.checkAidAvailability(
-                       ByteUtil.hexStr2Bytes(selectPPSEData.APPLICATION_IDENTIFIER)
-                   )
-
-                   if (mutuallySupportedAid !== null) {
-                       val aidSelected = ByteUtil.bytes2HexStr(mutuallySupportedAid.aid)
-                       println("selected aid ::::: $aidSelected")
-                   } else {
-                       throw NFCPOSEXCEPTION("Aid not found")
-                   }
-               } catch (e: Exception) {
-                   println(e.message)
-               }
-//                makeApplicationSelection(isoDep)
+                // makeApplication final Selection(isoDep)
                 // READ APPLICATION DATA
                 // EMV RISK MANAGEMENT [ OFFLINE DATA AUTH,
                          // PROCESSING RESTRICTIONS,
@@ -278,5 +268,11 @@ class MainActivity : AppCompatActivity() {
 // CDOL1 are mandatory data that the terminal sends to the card for GEN AC 1
     // if any of the CDOL1 data is missing the card terminates the transaction with error
 // CDOL2 is used for GEN AC 2 which is mostly important for contact trans
+
+
+    override fun onApplicationSelected(aid: ByteArray) {
+        println("this is called")
+       console.log("onAppSelectedCalled", HexUtil.toHexString(aid))
+    }
 
 }
