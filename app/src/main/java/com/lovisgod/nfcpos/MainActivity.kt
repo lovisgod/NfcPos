@@ -235,34 +235,6 @@ class MainActivity : AppCompatActivity(), EmvListener {
     }
 
 
-    private fun decodeAip(aipBinary: String): AIPDECODED {
-      val splittedAip = aipBinary.split("")
-      val aipDecoded = AIPDECODED()
-      aipDecoded.apply {
-          SDA_SUPPORTED = splittedAip.get(2) == "1"
-          DDA_SUPPORTED = splittedAip.get(3) == "1"
-          CARD_HOLDER_VERIFICATION = splittedAip.get(4) == "1"
-          TERMINAL_RISK_TO_BE_PERFORMED = splittedAip.get(5) == "1"
-          ISSUER_AUTHENTICATION_TO_BE_PERFORMED = splittedAip.get(6) == "1"
-          CDA_SUPPORTED = splittedAip.get(8) == "1"
-      }
-      return  aipDecoded
-    }
-
-
-    enum class CVMUSE {
-        signature, onlinepin, offlinepin
-    }
-
-    data class AIPDECODED (
-        var SDA_SUPPORTED : Boolean = false,
-        var DDA_SUPPORTED: Boolean = false,
-        var CARD_HOLDER_VERIFICATION: Boolean = false,
-        var TERMINAL_RISK_TO_BE_PERFORMED: Boolean = false,
-        var ISSUER_AUTHENTICATION_TO_BE_PERFORMED: Boolean = false,
-        var CDA_SUPPORTED: Boolean = false
-     )
-
 // NOTE
 // CDOL1 is only used in contactless application
 // CDOL1 are mandatory data that the terminal sends to the card for GEN AC 1

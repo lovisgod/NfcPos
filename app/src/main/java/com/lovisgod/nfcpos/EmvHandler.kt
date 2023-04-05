@@ -3,6 +3,9 @@ package com.lovisgod.nfcpos
 import android.nfc.tech.IsoDep
 import android.os.Build
 import androidx.annotation.RequiresApi
+import com.lovisgod.nfcpos.data.model.AIPDECODED
+import com.lovisgod.nfcpos.data.model.FinalSelectApplicationData
+import com.lovisgod.nfcpos.data.model.GpoResponseData
 import com.lovisgod.nfcpos.data.model.NFCPOSEXCEPTION
 import com.lovisgod.nfcpos.utils.ByteUtil
 import com.lovisgod.nfcpos.utils.EmvOptV2
@@ -12,7 +15,11 @@ import com.lovisgod.nfcpos.utils.console
 class EmvHandler(val emvListener: EmvListener) {
     val emvOptV2 = EmvOptV2()
 
+    lateinit var  coreEmvListner : CoreEmvHanlder
+
+
     fun start(isoDep: IsoDep) {
+        coreEmvListner = CoreEmvHanlder(emvListener, isoDep)
         selectApplication(isoDep)
     }
 
@@ -46,6 +53,7 @@ class EmvHandler(val emvListener: EmvListener) {
                 "aid::::: ${finalSelectApplicationData.aid}::::: pdol::::::${finalSelectApplicationData.pdol}")
             if (finalSelectApplicationData.aid.isNotEmpty()) {
                 emvListener.onApplicationSelected(ByteUtil.hexStr2Bytes(finalSelectApplicationData.aid))
+                coreEmvListner.onFinalSelection(finalSelectApplicationData)
             }else {
                 throw  NFCPOSEXCEPTION("AID Not found")
             }
@@ -53,4 +61,47 @@ class EmvHandler(val emvListener: EmvListener) {
             println(e.message)
         }
     }
+
+
+     inner class CoreEmvHanlder(val emvListener: EmvListener, val isoDep: IsoDep): CoreEmvListner {
+
+        var aipdecoded = AIPDECODED()
+        override fun onFinalSelection(finalSelectApplicationData: FinalSelectApplicationData) {
+           try {
+               val gpoResponseData = GetGpoHandler.getGPo(finalSelectApplicationData, isoDep)
+               if (gpoResponseData !=null) {
+                   aipdecoded = gpoResponseData.AIP?.let { decodeAip(it) }!!
+                   console.log("aip_decoded", aipdecoded.toString())
+                   gpoResponseData.AFL?.let { sendReadRecords(gpoResponseData) }
+
+               } else {
+                   throw NFCPOSEXCEPTION("GPO ERROR while getting GPO")
+               }
+           } catch (e:Exception) {
+               console.log("GPO ERROR", e.message.toString())
+           }
+        }
+
+         override fun sendReadRecords(gpoResponseData: GpoResponseData) {
+             gpoResponseData.AFL?.let { ReadRecordHandler.initiate(it, isoDep) }
+         }
+
+
+         private fun decodeAip(aipBinary: String): AIPDECODED {
+            val splittedAip = aipBinary.split("")
+            val aipDecoded = AIPDECODED()
+            aipDecoded.apply {
+                SDA_SUPPORTED = splittedAip.get(2) == "1"
+                DDA_SUPPORTED = splittedAip.get(3) == "1"
+                CARD_HOLDER_VERIFICATION = splittedAip.get(4) == "1"
+                TERMINAL_RISK_TO_BE_PERFORMED = splittedAip.get(5) == "1"
+                ISSUER_AUTHENTICATION_TO_BE_PERFORMED = splittedAip.get(6) == "1"
+                CDA_SUPPORTED = splittedAip.get(8) == "1"
+            }
+            return  aipDecoded
+        }
+
+
+    }
+
 }
