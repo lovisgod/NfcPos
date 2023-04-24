@@ -10,4 +10,5 @@ interface EmvListener {
 interface CoreEmvListner {
     fun onFinalSelection(finalSelectApplicationData: FinalSelectApplicationData)
     fun sendReadRecords(gpoResponseData: GpoResponseData)
+    fun startODA(readRecordResult: ByteArray)
 }

@@ -7,9 +7,8 @@ import com.lovisgod.nfcpos.data.model.AIPDECODED
 import com.lovisgod.nfcpos.data.model.FinalSelectApplicationData
 import com.lovisgod.nfcpos.data.model.GpoResponseData
 import com.lovisgod.nfcpos.data.model.NFCPOSEXCEPTION
-import com.lovisgod.nfcpos.utils.ByteUtil
-import com.lovisgod.nfcpos.utils.EmvOptV2
-import com.lovisgod.nfcpos.utils.console
+import com.lovisgod.nfcpos.utils.*
+import com.lovisgod.nfcpos.utils.security.ODAAuthenticationHelper
 
 @RequiresApi(Build.VERSION_CODES.KITKAT)
 class EmvHandler(val emvListener: EmvListener) {
@@ -68,6 +67,7 @@ class EmvHandler(val emvListener: EmvListener) {
         var aipdecoded = AIPDECODED()
         override fun onFinalSelection(finalSelectApplicationData: FinalSelectApplicationData) {
            try {
+               POSApplication.AID_SELECTED = finalSelectApplicationData.aid
                val gpoResponseData = GetGpoHandler.getGPo(finalSelectApplicationData, isoDep)
                if (gpoResponseData !=null) {
                    aipdecoded = gpoResponseData.AIP?.let { decodeAip(it) }!!
@@ -83,7 +83,23 @@ class EmvHandler(val emvListener: EmvListener) {
         }
 
          override fun sendReadRecords(gpoResponseData: GpoResponseData) {
-             gpoResponseData.AFL?.let { ReadRecordHandler.initiate(it, isoDep) }
+             gpoResponseData.AFL?.let {
+                 val result = ReadRecordHandler.initiate(it, isoDep)
+                 val resultBytes = ByteUtil.hexStr2Bytes(result)
+                 if (resultBytes != null) { startODA(resultBytes)}
+             }
+         }
+
+         override fun startODA(readRecordResult: ByteArray) {
+             var bertlvs = Conversions.parseBERTLV(readRecordResult)
+             val capkIndex =
+                 bertlvs?.let { it1 -> TAGHelper.getTagFromTlv(bertlvs, ODAAuthenticationHelper.CAPK_INDEX)
+                 }
+             console.log("capk index", capkIndex.toString())
+             if (capkIndex != null) {
+                 val capkChecked = ODAAuthenticationHelper.fetchCapk(POSApplication.AID_SELECTED, capkIndex)
+                 console.log("capk checked",ByteUtil.bytes2HexStr( capkChecked?.modul))
+             }
          }
 
 

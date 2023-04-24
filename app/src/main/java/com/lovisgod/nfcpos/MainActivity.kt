@@ -248,3 +248,15 @@ class MainActivity : AppCompatActivity(), EmvListener {
     }
 
 }
+
+
+
+
+//Card Data Authentication (CDA)
+//Terminal Action Analysis (TAA)
+//Cardholder Verification (e.g. PIN entry)
+//Generate Application Cryptogram (AC)
+//Transaction Certificate (TC) if applicable
+//Terminal Risk Management (TRM) if applicable
+//Issuer Authentication if applicable
+//Issuer Script Processing if applicable

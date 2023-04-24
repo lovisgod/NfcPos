@@ -34,7 +34,6 @@ object SelectApplicationHandler {
         val tlv = bertlvs?.let { Conversions.findTLVTAG(it, "84") }
         val aid = tlv?.getHexValue().toString()
         println("AID is ::::: ${aid}")
-
         val selectPPSEData = SelectPPSEData(
             APPLICATION_IDENTIFIER = TAGHelper.getTagFromTlv(bertlvs, SelectApplicationData.APPLICATION_IDENTIFIER.tag),
             APPLICATION_PRIORITY_INDICATOR = TAGHelper.getTagFromTlv(bertlvs, SelectApplicationData.APPLICATION_PRIORITY_INDICATOR.tag)

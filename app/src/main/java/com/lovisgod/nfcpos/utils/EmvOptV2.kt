@@ -15,7 +15,7 @@ class EmvOptV2 {
     private fun getAllAid() = ConfigInfoHelper.readAID()
     private fun getAllCapk() = ConfigInfoHelper.readCAPK()
 
-    fun checkAidAvailability(aid: ByteArray): AID? {
+     fun checkAidAvailability(aid: ByteArray): AID? {
         val aids = getAllAid()
         val aid = aids.find { aidx ->
             aidx.aid.contentEquals(aid)
@@ -23,6 +23,20 @@ class EmvOptV2 {
 
         return aid
 
+    }
+
+    fun checkCapkAvailability(rid: ByteArray, index: Byte) : CapkV2? {
+        val capks = getAllCapk()
+        val capk  = capks.find {
+//            console.log("got here", "got here ::::: ${it.index == index}")
+            it.rid.contentEquals(rid) && it.index == index
+        }
+
+        if (capk != null) {
+             console.log("capk capk", ByteUtil.bytes2HexStr(capk?.modul))
+        }
+
+        return capk
     }
 
     object ConfigInfoHelper {

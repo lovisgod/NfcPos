@@ -14,4 +14,6 @@ object POSApplication {
             .setUseDefaultSharedPreference(true)
             .build()
     }
+
+    var AID_SELECTED = ""
 }
