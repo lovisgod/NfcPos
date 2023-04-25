@@ -69,12 +69,31 @@ class Conversions {
         }
 
         fun parseBERTLV(data: ByteArray): BerTlvs? {
-            return BerTlvParser().parse(data)
+           try {
+               return BerTlvParser().parse(data)
+           } catch (e: Exception) {
+               e.printStackTrace()
+               return null
+           }
         }
 
         fun findTLVTAG(tlvs: BerTlvs, tag: String): BerTlv? {
-            return tlvs.find(BerTag(tag))
+           try {
+               return tlvs.find(BerTag(tag))
+           } catch (e: Exception) {
+               e.printStackTrace()
+               return null
+           }
         }
+        fun findTLVTAGByte(tlvs: BerTlvs, tag: ByteArray): BerTlv? {
+            try {
+                return tlvs.find(BerTag(tag))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return null
+            }
+        }
+
 
 
 

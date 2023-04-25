@@ -13,6 +13,7 @@ import java.util.*
 
 object ODAAuthenticationHelper {
  val CAPK_INDEX = "8F"
+ val ISSUER_PK_CERT = "90"
 
 
  data class DecryptedIssuerPkCert(val decryptedKey: String, val failed: Boolean)
@@ -27,27 +28,32 @@ object ODAAuthenticationHelper {
  }
 
  fun DecryptIssuerPKCert(issuerCertIn: String, capk: String): ByteArray? {
-
- // Issuer Public Key Certificate in bytes
-        val issuerCert = Conversions.HexStringToByteArray(issuerCertIn)
+     try {
+         // Issuer Public Key Certificate in bytes
+         val issuerCert = Conversions.HexStringToByteArray(issuerCertIn)
 
 // Certification Authority Public Key in bytes
-        val caPubKey = Conversions.HexStringToByteArray(capk)
+         val caPubKey = ByteUtil.hexStr2Bytes(capk)
 
 // Algorithm name
-        val algorithm = "RSA/ECB/PKCS1Padding"
+         val algorithm = "RSA/ECB/PKCS1Padding"
 
 // Create a PublicKey object from the Certification Authority Public Key bytes
-        val keyFactory = KeyFactory.getInstance("RSA")
-        val caPublicKeySpec = X509EncodedKeySpec(caPubKey)
-        val caPublicKey = keyFactory.generatePublic(caPublicKeySpec)
+         val keyFactory = KeyFactory.getInstance("RSA")
+         val caPublicKeySpec = X509EncodedKeySpec(caPubKey)
+         val caPublicKey = keyFactory.generatePublic(caPublicKeySpec)
 
 // Apply the recovery function to the Issuer Public Key Certificate using the Certification Authority Public Key
-        val cipher = Cipher.getInstance(algorithm)
-        cipher.init(Cipher.DECRYPT_MODE, caPublicKey)
-        val recoveredData = cipher.doFinal(issuerCert)
-        return recoveredData
-    }
+         val cipher = Cipher.getInstance(algorithm)
+         cipher.init(Cipher.DECRYPT_MODE, caPublicKey)
+         val recoveredData = cipher.doFinal(issuerCert)
+         return recoveredData
+     } catch (e: Exception) {
+         e.printStackTrace()
+         console.log("DECRYPT ISSUER KEY ERROR", e.message.toString())
+         return null
+     }
+ }
 
     fun performCda(decryptedKey: ByteArray, issuerCertIn: String, capk: String): DecryptedIssuerPkCert {
 

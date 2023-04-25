@@ -78,7 +78,7 @@ object GetGpoHandler {
 
     fun getTagsFrom9F38(tag9F38: String): List<String> {
 //        val hexString = "9F389F66049F02069F03069F1A0295055F2A029A039C019F3704"
-        val pattern = "(9F38|9F66|9F02|9F03|9F1A|9F37|9A|9C|95|5F2A|C7)".toRegex()
+        val pattern = "(9F38|9F66|9F02|9F03|9F1A|9F37|9A|9C|95|5F2A|C7|90)".toRegex()
         val tags = pattern.findAll(tag9F38).map { it.value }.toList()
         println(tags)
         return tags

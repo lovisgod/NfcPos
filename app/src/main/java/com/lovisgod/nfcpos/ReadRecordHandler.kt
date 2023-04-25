@@ -4,12 +4,16 @@ import android.nfc.tech.IsoDep
 import com.lovisgod.nfcpos.utils.Conversions
 import com.lovisgod.nfcpos.utils.Conversions.Companion.hexToBin
 import com.lovisgod.nfcpos.utils.HexUtil
+import com.lovisgod.nfcpos.utils.TAGHelper
 import com.lovisgod.nfcpos.utils.console
+import com.lovisgod.nfcpos.utils.security.ODAAuthenticationHelper
+import parse90
 
 object ReadRecordHandler {
 
     fun initiate(afl: String, isoDep: IsoDep): String {
         var result = ""
+        var byrress = byteArrayOf()
         val aflEntries =  getAFLEntries(afl)
         val commandList  = ArrayList<String> ()
         for (entry in aflEntries) {
@@ -20,8 +24,11 @@ object ReadRecordHandler {
 
         for(readCommand in commandList) {
             val byteResult = isoDep.transceive(Conversions.HexStringToByteArray(readCommand))
+            byrress += byteResult
+            parse90(HexUtil.toHexString(byteResult))
             result += HexUtil.toHexString(byteResult)
         }
+
 
         console.log("read apdu response", result)
 

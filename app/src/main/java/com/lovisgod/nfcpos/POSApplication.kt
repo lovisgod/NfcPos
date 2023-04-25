@@ -2,6 +2,7 @@ package com.lovisgod.nfcpos
 
 import android.content.Context
 import android.content.ContextWrapper
+import com.lovisgod.nfcpos.utils.security.ODAAuthenticationHelper
 import com.pixplicity.easyprefs.library.Prefs
 
 object POSApplication {
@@ -16,4 +17,6 @@ object POSApplication {
     }
 
     var AID_SELECTED = ""
+    var TAG_90 = ""
+    var ODA_RESULT = ODAAuthenticationHelper.DecryptedIssuerPkCert("", false)
 }

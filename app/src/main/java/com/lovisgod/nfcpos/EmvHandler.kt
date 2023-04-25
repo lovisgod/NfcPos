@@ -92,13 +92,39 @@ class EmvHandler(val emvListener: EmvListener) {
 
          override fun startODA(readRecordResult: ByteArray) {
              var bertlvs = Conversions.parseBERTLV(readRecordResult)
+             println("${readRecordResult.asList()}")
+
              val capkIndex =
                  bertlvs?.let { it1 -> TAGHelper.getTagFromTlv(bertlvs, ODAAuthenticationHelper.CAPK_INDEX)
                  }
              console.log("capk index", capkIndex.toString())
              if (capkIndex != null) {
+                 /** RETRIEVE CAPK USING RID AND INDEX(8F)**/
                  val capkChecked = ODAAuthenticationHelper.fetchCapk(POSApplication.AID_SELECTED, capkIndex)
                  console.log("capk checked",ByteUtil.bytes2HexStr( capkChecked?.modul))
+                 /***CHECK LENGTH OF PUBLIC KEY CERTIFICATE WITH THAT OF CAPK****/
+                 val issuerPkCert = POSApplication.TAG_90
+                 console.log("issuerPkCert checked", issuerPkCert)
+                 val decrypteIssuerPkCertResult = ODAAuthenticationHelper.DecryptIssuerPKCert(
+                     issuerPkCert, ByteUtil.bytes2HexStr(capkChecked?.modul))
+                 console.log("decryptedIssuerCert", ByteUtil.bytes2HexStr(decrypteIssuerPkCertResult))
+                 if (decrypteIssuerPkCertResult == null) {
+                     POSApplication.ODA_RESULT = ODAAuthenticationHelper.DecryptedIssuerPkCert(
+                         "", true)
+                     return
+                 }
+                 val odaResult = ODAAuthenticationHelper.performCda(
+                     decrypteIssuerPkCertResult,
+                     issuerPkCert,
+                     ByteUtil.bytes2HexStr(capkChecked?.modul)
+                 )
+
+                 POSApplication.ODA_RESULT = odaResult
+
+             } else {
+                 POSApplication.ODA_RESULT = ODAAuthenticationHelper.DecryptedIssuerPkCert(
+                     "", true)
+                 return
              }
          }
 
