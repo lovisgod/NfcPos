@@ -86,7 +86,9 @@ class EmvHandler(val emvListener: EmvListener) {
              gpoResponseData.AFL?.let {
                  val result = ReadRecordHandler.initiate(it, isoDep)
                  val resultBytes = ByteUtil.hexStr2Bytes(result)
-                 if (resultBytes != null) { startODA(resultBytes)}
+                 if (resultBytes != null) {
+                     startODA(resultBytes)
+                 }
              }
          }
 
@@ -105,16 +107,18 @@ class EmvHandler(val emvListener: EmvListener) {
                  /***CHECK LENGTH OF PUBLIC KEY CERTIFICATE WITH THAT OF CAPK****/
                  val issuerPkCert = POSApplication.TAG_90
                  console.log("issuerPkCert checked", issuerPkCert)
-                 val decrypteIssuerPkCertResult = ODAAuthenticationHelper.DecryptIssuerPKCert(
-                     issuerPkCert, ByteUtil.bytes2HexStr(capkChecked?.modul))
-                 console.log("decryptedIssuerCert", ByteUtil.bytes2HexStr(decrypteIssuerPkCertResult))
-                 if (decrypteIssuerPkCertResult == null) {
+//                 val decrypteIssuerPkCertResult = ODAAuthenticationHelper.DecryptIssuerPKCert(
+//                     issuerPkCert, ByteUtil.bytes2HexStr(capkChecked?.modul))
+                 val decryptedIssuerPkCertResultx = Utility.performRSA(ByteUtil.hexStr2Bytes(issuerPkCert),
+                     capkChecked?.exponent, capkChecked?.modul)
+                 console.log("decryptedIssuerCert", ByteUtil.bytes2HexStr(decryptedIssuerPkCertResultx))
+                 if (decryptedIssuerPkCertResultx == null) {
                      POSApplication.ODA_RESULT = ODAAuthenticationHelper.DecryptedIssuerPkCert(
                          "", true)
                      return
                  }
                  val odaResult = ODAAuthenticationHelper.performCda(
-                     decrypteIssuerPkCertResult,
+                     decryptedIssuerPkCertResultx,
                      issuerPkCert,
                      ByteUtil.bytes2HexStr(capkChecked?.modul)
                  )

@@ -60,10 +60,11 @@ object ODAAuthenticationHelper {
         if (!issuerCertIn.length.equals(capk.length)) {
             return DecryptedIssuerPkCert("", true)
         }
+        val decryptedKeyString = ByteUtil.bytes2HexStr(decryptedKey)
         // Check if the Recovered Data Trailer is equal to 'BC'
-        val recoveredDataHeader = decryptedKey.take(2).toString()
-        val certificateFormat = decryptedKey.take(4).toString().substring(2, 4)
-        val recoveredDataTrailer = decryptedKey.takeLast(2).toString()
+        val recoveredDataHeader = decryptedKeyString.take(2).toString()
+        val certificateFormat = decryptedKeyString.take(4).toString().substring(2, 4)
+        val recoveredDataTrailer = decryptedKeyString.takeLast(2).toString()
         console.log("header", recoveredDataHeader)
         console.log("trailer", recoveredDataTrailer)
         console.log("format", certificateFormat)
